@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Junk Journal Studio — HelenPrintableShop</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+<style>
+/* ── Tokens: an archival ephemera ledger ──────────────────
+   paper  #EFE7D6   aged base
+   panel  #E5DAC2   mounted card
+   ink    #2B2620   warm near-black
+   teal   #2E5A5C   primary action (bottle-green ink)
+   brass  #9A7B2E   small highlights
+   stamp  #9E4B3B   faded archival stamp / status red
+*/
+:root{
+  --paper:#EFE7D6; --panel:#E5DAC2; --panel2:#EDE3CE;
+  --ink:#2B2620; --ink2:#6B5F4F; --line:#CDBE9E;
+  --teal:#2E5A5C; --teal-d:#244749; --brass:#9A7B2E; --stamp:#9E4B3B;
+  --ok:#3E6B4E; --serif:Georgia,'Times New Roman',serif; --mono:'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--serif); color:var(--ink); line-height:1.5;
+  background-color:var(--paper);
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(154,123,46,.06), transparent 40%),
+    radial-gradient(circle at 82% 78%, rgba(46,90,92,.06), transparent 42%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+  min-height:100vh;
+}
+.wrap{max-width:980px;margin:0 auto;padding:22px 18px 80px}
+
+/* header */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;
+  border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:6px}
+.brand .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--stamp)}
+.brand h1{font-size:30px;font-weight:700;font-style:italic;letter-spacing:.5px;line-height:1.05;margin-top:2px}
+.brand .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink2);margin-top:4px}
+.gear{font-family:var(--mono);font-size:12px;letter-spacing:.06em;border:1.5px solid var(--ink);
+  background:transparent;color:var(--ink);padding:9px 13px;cursor:pointer;border-radius:2px;white-space:nowrap}
+.gear:hover{background:var(--ink);color:var(--paper)}
+.keystate{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--stamp);margin-right:6px;vertical-align:middle}
+.keystate.on{background:var(--ok)}
+
+/* batch bar */
+.bar{background:var(--panel);border:1.5px solid var(--line);border-radius:3px;
+  padding:14px 15px;margin:18px 0;display:grid;grid-template-columns:1fr 170px 200px;gap:12px}
+.fg{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fg.full{grid-column:1/-1}
+label{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+input,select,textarea{font-family:var(--serif);font-size:14px;color:var(--ink);background:var(--panel2);
+  border:1.5px solid var(--line);border-radius:2px;padding:9px 10px;width:100%}
+textarea{resize:vertical;line-height:1.45}
+input:focus,select,textarea:focus,select:focus{outline:none;border-color:var(--teal)}
+select{cursor:pointer;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%232B2620'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+
+/* run row */
+.run{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  border:none;border-radius:2px;padding:12px 20px;transition:transform .05s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--teal);color:#F4EFE0}
+.btn.primary:hover{background:var(--teal-d)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1.5px solid var(--ink);color:var(--ink);padding:11px 16px}
+.btn.ghost:hover{background:var(--ink);color:var(--paper)}
+.prog{font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.count{display:flex;align-items:center;gap:7px}
+.count label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.count input{width:64px;padding:8px 9px}
+.presets{margin-top:-2px}
+.presets select{width:auto;min-width:170px;max-width:240px}
+.presets input{width:auto;min-width:150px}
+.count select{width:auto;padding:8px 26px 8px 9px}
+
+/* plates */
+.section-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--stamp);border-top:1.5px solid var(--line);padding-top:16px;margin:26px 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.plate{position:relative;background:var(--panel);border:1.5px solid var(--line);border-radius:3px;padding:13px 13px 14px;
+  box-shadow:1px 2px 0 rgba(43,38,32,.07)}
+.plate.hero{grid-column:1/-1;border-color:var(--teal);box-shadow:1px 2px 0 rgba(46,90,92,.18)}
+.plate-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
+.plate-no{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
+.plate.hero .plate-no{color:var(--teal)}
+.plate-file{font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
+.plate textarea{font-size:13px;min-height:62px}
+.plate .acts{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.mini{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;
+  border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:6px 11px;border-radius:2px}
+.mini:hover{background:var(--ink);color:var(--paper)}
+.mini.go{border-color:var(--teal);color:var(--teal)}
+.mini.go:hover{background:var(--teal);color:#F4EFE0}
+.mini:disabled{opacity:.45;cursor:not-allowed}
+.status{font-family:var(--mono);font-size:11px;margin-left:auto}
+.status.idle{color:var(--ink2)} .status.run{color:var(--brass)} .status.done{color:var(--ok)} .status.err{color:var(--stamp)}
+
+/* image mount: a taped specimen photo */
+.mount{margin-top:11px;display:none;position:relative;background:#fbf7ee;border:1px solid var(--line);
+  padding:8px;border-radius:1px}
+.mount.show{display:block}
+.mount::before,.mount::after{content:"";position:absolute;top:-8px;width:46px;height:17px;
+  background:rgba(154,123,46,.22);border:1px solid rgba(154,123,46,.3);transform:rotate(-3deg)}
+.mount::before{left:14px} .mount::after{right:14px;transform:rotate(3deg)}
+.mount img{display:block;width:100%;border:1px solid #e6dcc6}
+.plate.hero .mount img{max-height:none}
+
+/* handoff */
+.handoff{margin-top:30px;border:2px solid var(--ink);border-radius:3px;background:var(--panel2);padding:18px}
+.handoff h3{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.handoff p.note{font-size:13px;color:var(--ink2);margin-bottom:13px}
+.handoff pre{font-family:var(--mono);font-size:12px;line-height:1.6;background:#FBF7EE;border:1.5px solid var(--line);
+  border-radius:2px;padding:12px;white-space:pre-wrap;word-break:break-all;max-height:240px;overflow:auto;color:var(--ink)}
+.handoff .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(43,38,32,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.scrim.open{display:flex}
+.modal{background:var(--paper);border:2px solid var(--ink);border-radius:4px;max-width:440px;width:100%;padding:22px}
+.modal h2{font-size:21px;font-style:italic;margin-bottom:4px}
+.modal .mono-note{font-family:var(--mono);font-size:11.5px;color:var(--ink2);margin-bottom:16px;line-height:1.6}
+.modal a{color:var(--teal)}
+.modal .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;background:var(--ink);color:var(--paper);
+  padding:11px 18px;border-radius:3px;transition:.25s;z-index:60;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--stamp)} #toast.ok{background:var(--ok)}
+
+@media(max-width:720px){
+  .bar{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr}
+  .brand h1{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="eyebrow">HelenPrintableShop · Etsy</div>
+      <h1>Junk Journal Studio</h1>
+      <div class="sub">spread generator · runware → canva handoff</div>
+    </div>
+    <button class="gear" onclick="openSettings()"><span class="keystate" id="keyDot"></span>Settings</button>
+  </header>
+
+  <div class="bar">
+    <div class="fg">
+      <label for="theme">Theme</label>
+      <input id="theme" placeholder="e.g. Victorian China Florals" oninput="persist()">
+    </div>
+    <div class="fg">
+      <label for="model">Model</label>
+      <select id="model" onchange="onModel();persist()">
+        <option value="bytedance:seedream@4.5">Seedream 4.5</option>
+        <option value="runware:400@1">Flux Pro</option>
+        <option value="runware:z-image@turbo">Z-Image Turbo</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label for="ratio">Spread size</label>
+      <select id="ratio" onchange="persist()"></select>
+    </div>
+    <div class="fg full">
+      <label for="style">Shared style (appended to every prompt)</label>
+      <textarea id="style" rows="2" oninput="persist()">vintage junk journal double-page spread, watercolor ephemera, aged paper texture, shabby chic, soft muted palette, ornate botanical detail, no text, no lettering, high detail</textarea>
+    </div>
+  </div>
+
+  <div class="run">
+    <button class="btn ghost" id="btnWrite" onclick="writePrompts()">✎ Write prompts with Claude</button>
+    <button class="btn primary" id="btnAll" onclick="generateAll()">Generate all</button>
+    <span class="count"><label for="count">Spreads</label><input id="count" type="number" min="1" max="30" value="10" onchange="applyCount()"></span>
+    <span class="count"><label for="fmt">Format</label><select id="fmt" onchange="persist()"><option value="JPG">JPG</option><option value="PNG">PNG</option></select></span>
+    <button class="btn ghost" onclick="clearImages()">Clear images</button>
+    <span class="prog" id="prog"></span>
+  </div>
+
+  <div class="run presets">
+    <input id="presetName" placeholder="name this set…">
+    <button class="btn ghost" id="btnSave" onclick="savePreset()">⤓ Save prompts</button>
+    <select id="presetSel" onchange="loadPreset()"><option value="">Load saved set…</option></select>
+    <button class="btn ghost" id="btnDel" onclick="delPreset()">Delete</button>
+  </div>
+
+  <div class="section-eyebrow" id="spreadEyebrow">Double-page spreads</div>
+  <div class="grid" id="grid"></div>
+
+  <div class="handoff">
+    <h3>Canva handoff</h3>
+    <p class="note">When the set is ready, copy this block and paste it back to Claude — it has the title plus every spread in order (<span style="font-family:var(--mono)">spread_01 … spread_NN</span>). Claude uploads them into your Canva library and fills the listing template. URLs stay live on Runware's CDN.</p>
+    <div class="fg" style="margin-bottom:12px">
+      <label for="title">Cover title (goes into the template's <span style="text-transform:none">title</span> field — use \n for a line break)</label>
+      <input id="title" placeholder="Victorian Floral\nJunk Journal" oninput="buildHandoff();persist()">
+    </div>
+    <pre id="handoffOut">— generate images, then this fills in —</pre>
+    <div class="acts">
+      <button class="btn ghost" onclick="copyHandoff()">Copy handoff</button>
+      <button class="btn ghost" onclick="downloadAll()">Download all (named)</button>
+    </div>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="scrim" id="scrim">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div class="mono-note">Both keys are stored only in this browser (localStorage). Runware draws the images; Claude writes the prompts from your theme. Get them at <a href="https://my.runware.ai" target="_blank" rel="noopener">my.runware.ai</a> and <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>.</div>
+    <div class="fg">
+      <label for="rkey">Runware API key</label>
+      <input id="rkey" type="password" placeholder="runware key">
+    </div>
+    <div class="fg" style="margin-top:12px">
+      <label for="akey">Anthropic API key</label>
+      <input id="akey" type="password" placeholder="sk-ant-…">
+    </div>
+    <div class="acts">
+      <button class="btn ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn primary" onclick="saveKey()">Save key</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ── safe storage (works hosted; degrades silently in sandboxed preview) ── */
+const store={
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+const el=id=>document.getElementById(id);
+const KEY_K='jjs_runware_key', ANT_K='jjs_anthropic_key', STATE_K='jjs_state';
+
+/* ── Runware dimension presets (from your PCC studio) ── */
+const RATIOS={
+  'bytedance:seedream@4.5':[
+    {l:'4:3 Landscape · 2304×1728',w:2304,h:1728},
+    {l:'3:4 Portrait · 1728×2304',w:1728,h:2304},
+    {l:'1:1 Square · 2048×2048',w:2048,h:2048},
+    {l:'9:16 Portrait · 1440×2560',w:1440,h:2560}
+  ],
+  'runware:400@1':[
+    {l:'4:3 Landscape · 1024×768',w:1024,h:768},
+    {l:'3:2 Landscape · 1152×768',w:1152,h:768},
+    {l:'1:1 Square · 1024×1024',w:1024,h:1024},
+    {l:'2:3 Portrait · 768×1152',w:768,h:1152}
+  ],
+  'runware:z-image@turbo':[
+    {l:'4:3 Landscape · 1152×896',w:1152,h:896},
+    {l:'16:9 Wide · 1280×720',w:1280,h:720},
+    {l:'1:1 Square · 1024×1024',w:1024,h:1024},
+    {l:'2:3 Portrait · 832×1280',w:832,h:1280}
+  ]
+};
+
+/* ── plates: configurable count of spreads ── */
+let COUNT=10, PLATES=[], RUNNING=false;
+const S={};            // per-key {prompt,url,status}
+
+const pad=i=>String(i).padStart(2,'0');
+function themeSlug(){
+  const t=el('theme').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return t||'spread';
+}
+const fmtExt=()=>(el('fmt').value==='PNG'?'png':'jpg');
+const fileName=i=>themeSlug()+'-'+pad(i)+'.'+fmtExt();   // themed download name
+const fieldLabel=i=>'spread_'+pad(i);              // Canva field label
+
+function plateHTML(p){
+  return `<div class="plate" id="pl-${p.key}">
+    <div class="plate-head">
+      <span class="plate-no">Spread ${pad(p.num)}</span>
+      <span class="plate-file">${fieldLabel(p.num)}</span>
+    </div>
+    <textarea id="pr-${p.key}" placeholder="prompt for this spread" oninput="S['${p.key}'].prompt=this.value;persist()"></textarea>
+    <div class="acts">
+      <button class="mini go" id="go-${p.key}" onclick="genOne('${p.key}')">Generate</button>
+      <button class="mini" id="dl-${p.key}" onclick="dlOne('${p.key}')" disabled>Download</button>
+      <span class="status idle" id="st-${p.key}">ready</span>
+    </div>
+    <div class="mount" id="mt-${p.key}"><img id="im-${p.key}" alt=""></div>
+  </div>`;
+}
+function buildPlates(n){
+  PLATES=[];
+  for(let i=1;i<=n;i++){ const k='s'+i; PLATES.push({key:k,num:i}); if(!S[k]) S[k]={prompt:'',url:'',status:'idle'}; }
+  el('grid').innerHTML=PLATES.map(plateHTML).join('');
+  PLATES.forEach(p=>{
+    el('pr-'+p.key).value=S[p.key].prompt||'';
+    if(S[p.key].url){ el('im-'+p.key).src=S[p.key].url; el('mt-'+p.key).classList.add('show');
+      el('dl-'+p.key).disabled=false; setStatus(p.key,'done','done ✓'); }
+  });
+  const se=el('spreadEyebrow'); if(se) se.textContent=PLATES.length+' double-page spreads';
+}
+function applyCount(){
+  let n=parseInt(el('count').value,10); if(isNaN(n)||n<1)n=1; if(n>30)n=30;
+  el('count').value=n; COUNT=n; buildPlates(n); buildHandoff(); persist();
+}
+
+/* ── model / ratio wiring ── */
+function onModel(){
+  const m=el('model').value, list=RATIOS[m]||RATIOS['bytedance:seedream@4.5'];
+  el('ratio').innerHTML=list.map((r,i)=>`<option value="${i}">${r.l}</option>`).join('');
+}
+function getRatio(){
+  const m=el('model').value, list=RATIOS[m]||RATIOS['bytedance:seedream@4.5'];
+  return list[Number(el('ratio').value)||0];
+}
+
+/* ── Runware call (your proven pattern) ── */
+async function runware(prompt){
+  const key=store.get(KEY_K);
+  if(!key) throw new Error('No Runware key — open Settings');
+  const model=el('model').value, ratio=getRatio();
+  const r=await fetch('https://api.runware.ai/v1',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify([{taskType:'imageInference',taskUUID:crypto.randomUUID(),
+      positivePrompt:prompt,model,width:ratio.w,height:ratio.h,
+      numberResults:1,outputFormat:el('fmt').value,outputType:['URL']}])
+  });
+  if(!r.ok) throw new Error('Runware '+r.status+': '+(await r.text()).slice(0,160));
+  const data=await r.json();
+  if(data.errors?.length) throw new Error(data.errors[0].message||'Runware error');
+  const url=data.data?.[0]?.imageURL;
+  if(!url) throw new Error('No image URL returned');
+  return url;
+}
+
+/* ── Claude call (your PCC pattern) ── */
+async function callClaude(system,user){
+  const key=store.get(ANT_K);
+  if(!key) throw new Error('No Anthropic key — open Settings');
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,
+      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,system,
+      messages:[{role:'user',content:user}]})
+  });
+  if(!r.ok) throw new Error('Claude '+r.status+': '+(await r.text()).slice(0,160));
+  const data=await r.json();
+  return data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+const parseJ=raw=>{
+  let c=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  try{return JSON.parse(c)}catch(e){}
+  const m=c.match(/\{[\s\S]*\}/); if(m){try{return JSON.parse(m[0])}catch(e){}}
+  throw new Error('Could not read Claude output as JSON');
+};
+
+async function writePrompts(){
+  const theme=el('theme').value.trim();
+  if(!theme){ toast('Add a theme first','err'); el('theme').focus(); return; }
+  if(!store.get(ANT_K)){ toast('Add your Anthropic key in Settings','err'); openSettings(); return; }
+  const btn=el('btnWrite'), label=btn.textContent;
+  btn.disabled=true; btn.textContent='✎ Writing…'; el('prog').textContent='Claude is writing prompts…';
+  const style=el('style').value.trim();
+  const sys=`You are an art director for vintage junk journal digital products — printable double-page spreads sold on Etsy. Given a THEME, you write prompts for an AI image generator.
+A shared STYLE string is automatically appended to every prompt, so describe ONLY the subject, motifs, objects, colours and composition of each spread. Do not restate medium, texture, "no text", or anything the STYLE already covers.
+Each spread is one horizontal image split into two scenes, so write every spread prompt in the form "Left: <left scene>. Right: <right scene>." with related but distinct imagery on each side.
+Write ${COUNT} DISTINCT spreads: each a different motif within the theme (vary focal objects, arrangement and colour emphasis) so the set is cohesive but never repetitive.
+Return ONLY valid JSON, no preamble or commentary:
+{"title":"<Theme name>\\nJunk Journal","spreads":["Left: … Right: …","Left: … Right: …", "...exactly ${COUNT} items"]}`;
+  const usr=`THEME: ${theme}\nSTYLE (auto-appended, do not repeat): ${style||'(none set)'}`;
+  try{
+    const j=parseJ(await callClaude(sys,usr));
+    const spreads=Array.isArray(j.spreads)?j.spreads:[];
+    if(j.title) el('title').value=j.title;
+    spreads.slice(0,COUNT).forEach((sp,i)=>{ const k='s'+(i+1); if(S[k]){ S[k].prompt=sp; const ta=el('pr-'+k); if(ta) ta.value=sp; } });
+    buildHandoff(); persist();
+    el('prog').textContent=`Prompts ready — ${Math.min(spreads.length,COUNT)} spreads. Review, then Generate all.`;
+    toast('Prompts written','ok');
+  }catch(e){ el('prog').textContent=''; toast(e.message,'err'); }
+  btn.disabled=false; btn.textContent=label;
+}
+
+function fullPrompt(key){
+  const base=(S[key].prompt||'').trim();
+  if(!base) return '';
+  const style=el('style').value.trim();
+  return style ? base+', '+style : base;
+}
+function setStatus(key,cls,txt){
+  const s=el('st-'+key); if(s){s.className='status '+cls;s.textContent=txt;}
+}
+
+async function genOne(key){
+  const prompt=fullPrompt(key);
+  if(!prompt){ toast('Add a prompt first','err'); return; }
+  el('go-'+key).disabled=true; setStatus(key,'run','generating…');
+  try{
+    const url=await runware(prompt);
+    S[key].url=url; S[key].status='done';
+    const im=el('im-'+key); im.src=url; el('mt-'+key).classList.add('show');
+    el('dl-'+key).disabled=false; setStatus(key,'done','done ✓');
+    buildHandoff(); persist();
+  }catch(e){
+    S[key].status='err'; setStatus(key,'err','failed');
+    toast(e.message,'err');
+  }
+  el('go-'+key).disabled=false;
+}
+
+async function generateAll(){
+  if(RUNNING) return;
+  if(!store.get(KEY_K)){ toast('Add your Runware key in Settings','err'); openSettings(); return; }
+  const queue=PLATES.filter(p=>fullPrompt(p.key));
+  if(!queue.length){ toast('No prompts to generate yet','err'); return; }
+  RUNNING=true; el('btnAll').disabled=true;
+  let done=0;
+  for(const p of queue){
+    el('prog').textContent=`Generating ${done+1} / ${queue.length} — ${p.no}…`;
+    await genOne(p.key);
+    done++;
+    await new Promise(r=>setTimeout(r,250)); // gentle pacing
+  }
+  el('prog').textContent=`Done — ${done} image${done>1?'s':''} generated.`;
+  RUNNING=false; el('btnAll').disabled=false;
+}
+
+/* ── downloads ── */
+async function dlOne(key){
+  const p=PLATES.find(x=>x.key===key);
+  if(!S[key].url) return;
+  try{
+    const blob=await (await fetch(S[key].url)).blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fileName(p.num);
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){ toast('Download blocked — right-click the image to save','err'); }
+}
+async function downloadAll(){
+  const ready=PLATES.filter(p=>S[p.key].url);
+  if(!ready.length){ toast('Nothing generated yet','err'); return; }
+  for(const p of ready){ await dlOne(p.key); await new Promise(r=>setTimeout(r,500)); }
+  toast('Saved '+ready.length+' files','ok');
+}
+function clearImages(){
+  PLATES.forEach(p=>{
+    S[p.key].url=''; S[p.key].status='idle';
+    el('mt-'+p.key).classList.remove('show'); el('im-'+p.key).removeAttribute('src');
+    el('dl-'+p.key).disabled=true; setStatus(p.key,'idle','ready');
+  });
+  buildHandoff(); persist(); toast('Images cleared','ok');
+}
+
+/* ── Canva handoff block ── */
+function buildHandoff(){
+  const ready=PLATES.filter(p=>S[p.key].url);
+  if(!ready.length){ el('handoffOut').textContent='— generate images, then this fills in —'; return; }
+  const title=el('title').value.trim();
+  let out='CANVA COVER HANDOFF\n';
+  out+='template: EAG_Dglr-UE\n';
+  out+='theme: '+(el('theme').value.trim()||'(none)')+'\n';
+  if(title) out+='title: '+title+'\n';
+  out+='spreads: '+ready.length+'\n\n';
+  ready.forEach(p=>{ out+=fieldLabel(p.num)+': '+S[p.key].url+'\n'; });
+  el('handoffOut').textContent=out;
+}
+function copyHandoff(){
+  const t=el('handoffOut').textContent;
+  if(t.startsWith('—')){ toast('Nothing to copy yet','err'); return; }
+  navigator.clipboard.writeText(t).then(()=>toast('Handoff copied','ok'),
+    ()=>toast('Copy failed — select the text manually','err'));
+}
+
+/* ── settings ── */
+function openSettings(){ el('rkey').value=store.get(KEY_K)||''; el('akey').value=store.get(ANT_K)||''; el('scrim').classList.add('open'); }
+function closeSettings(){ el('scrim').classList.remove('open'); }
+function saveKey(){
+  store.set(KEY_K,el('rkey').value.trim());
+  store.set(ANT_K,el('akey').value.trim());
+  keyDot(); closeSettings(); toast('Keys saved','ok');
+}
+function keyDot(){ el('keyDot').classList.toggle('on', !!store.get(KEY_K) && !!store.get(ANT_K)); }
+
+/* ── persistence ── */
+function persist(){
+  const data={theme:el('theme').value,model:el('model').value,ratio:el('ratio').value,
+    fmt:el('fmt').value,style:el('style').value,title:el('title').value,count:COUNT,plates:{}};
+  Object.keys(S).forEach(k=>data.plates[k]={prompt:S[k].prompt,url:S[k].url});
+  store.set(STATE_K,JSON.stringify(data));
+}
+function restore(){
+  let d; try{ d=JSON.parse(store.get(STATE_K)||'null'); }catch(e){ d=null; }
+  if(!d){ buildPlates(COUNT); return; }
+  el('theme').value=d.theme||''; el('style').value=d.style??el('style').value;
+  el('title').value=d.title||'';
+  if(d.fmt) el('fmt').value=d.fmt;
+  if(d.model) el('model').value=d.model;
+  onModel();
+  if(d.ratio!=null) el('ratio').value=d.ratio;
+  if(d.plates) Object.entries(d.plates).forEach(([k,pd])=>{ S[k]={prompt:pd.prompt||'',url:pd.url||'',status:pd.url?'done':'idle'}; });
+  COUNT=d.count||10; el('count').value=COUNT;
+  buildPlates(COUNT); buildHandoff();
+}
+
+/* ── prompt presets ── */
+const PRESET_K='jjs_presets';
+const getPresets=()=>{ try{return JSON.parse(store.get(PRESET_K)||'{}')}catch(e){return{}} };
+function refreshPresets(sel){
+  const ps=getPresets(), s=el('presetSel');
+  s.innerHTML='<option value="">Load saved set…</option>'+Object.keys(ps).sort().map(n=>`<option>${n.replace(/</g,'&lt;')}</option>`).join('');
+  if(sel) s.value=sel;
+}
+function savePreset(){
+  const name=el('presetName').value.trim()||el('theme').value.trim()||('set-'+new Date().toISOString().slice(0,10));
+  const ps=getPresets();
+  ps[name]={theme:el('theme').value,style:el('style').value,title:el('title').value,count:COUNT,
+    prompts:Object.fromEntries(PLATES.map(p=>[p.key,S[p.key].prompt||'']))};
+  store.set(PRESET_K,JSON.stringify(ps)); refreshPresets(name); toast('Saved prompts: '+name,'ok');
+}
+function loadPreset(){
+  const name=el('presetSel').value; if(!name) return;
+  const p=getPresets()[name]; if(!p) return;
+  el('theme').value=p.theme||name; el('presetName').value=name; if(p.style!=null) el('style').value=p.style; el('title').value=p.title||'';
+  Object.keys(S).forEach(k=>{ S[k]={prompt:'',url:'',status:'idle'}; });
+  Object.entries(p.prompts||{}).forEach(([k,v])=>{ S[k]={prompt:v||'',url:'',status:'idle'}; });
+  COUNT=p.count||10; el('count').value=COUNT;
+  buildPlates(COUNT); buildHandoff(); persist(); toast('Loaded prompts: '+name,'ok');
+}
+function delPreset(){
+  const name=el('presetSel').value; if(!name){ toast('Pick a saved set first','err'); return; }
+  const ps=getPresets(); delete ps[name]; store.set(PRESET_K,JSON.stringify(ps));
+  refreshPresets(); toast('Deleted: '+name,'ok');
+}
+
+/* ── toast ── */
+let tT;
+function toast(msg,kind){
+  const t=el('toast'); t.textContent=msg; t.className='show'+(kind?' '+kind:'');
+  clearTimeout(tT); tT=setTimeout(()=>t.className='',2600);
+}
+
+/* ── init ── */
+onModel(); restore(); refreshPresets(); keyDot();
+</script>
+</body>
+</html>
